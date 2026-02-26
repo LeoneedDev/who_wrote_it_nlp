@@ -57,3 +57,51 @@ You can check the health of the server by sending a GET request to http://localh
 }
 ```
 
+# Notebooks
+## Using JupyterLab and Python venv on Unix systems
+The code base also includes Jupyter notebooks for data analysis and model training. These notebooks are located in the "notebooks" directory and can be run using JupyterLab. To start JupyterLab, you can use the following command:
+```bash
+jupyter lab
+```
+This will open JupyterLab in your web browser, where you can navigate to the "notebooks" directory and open the notebooks to run them individually and only part that you interest in. 
+
+** Remeber to install the required libraries before running the notebooks **
+```bash
+python -m venv venv && source venv/bin/activate
+```
+```bash
+pip install -r requirements.txt
+```
+
+## Using JupyterLab and Python venv on Windows systems
+Create and activate a virtual environment:
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+Then install dependencies and start JupyterLab:
+```bash
+pip install -r requirements.txt
+jupyter lab
+```
+
+# Describtion for the notebooks
+## **Dataset.ipynb**
+This notebook is used for dataset creation. You can find there code that can be used to create your own dataset for author profiling. This notebook consist of code for data collection, data cleaning. So the resulting dataset is ready for use in the next notebooks.
+
+## **EDA.ipynb**
+This notebook is used for exploratory data analysis. You can find there code that can be used to analyze the dataset and visualize the results. This notebook consist of code for data visualization, data analysis, and data preprocessing. So the resulting dataset is ready for use in the next notebooks.
+
+# **Hyperparams.ipynb**
+This notebook is used for hyperparameter tuning. You can find there code that can be used to tune the hyperparameters of the model. This notebook consist of code for hyperparameter tuning, model evaluation, and model selection. So the resulting model is ready for use in the next notebooks. 
+
+You can also provide a wandb token to log the results of hyperparameter tuning to Weights & Biases.
+Best model from hyperparameter tuning is saved in wandb, so we dont need to retrain it again in the next notebook.
+At then end of notebook you can save the best model from hyperparameter tuning locally. It will save time and not requare retraining the model in the next notebook.
+
+# **Training.ipynb**
+This notebook is used for model training. You can find there code that can be used to train the model. This notebook consist of code for model training, model evaluation, and model selection. So the resulting model is ready for use in the next notebooks. 
+
+You can also provide a wandb token to log the results of model training to Weights & Biases and save the best one in wandb artifacts.
+At the end of notebook you can save the best model from model training locally.
