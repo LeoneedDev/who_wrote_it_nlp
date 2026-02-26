@@ -1,6 +1,12 @@
-flask
-transformers
-torch
-accelerate
-sentencepiece
-huggingface_hub
+# Notebook dependencies
+numpy~=2.4
+pandas~=3.0
+scipy~=1.17
+statsmodels~=0.14
+matplotlib~=3.10
+scikit-learn~=1.8
+seaborn~=0.13
+jupyterlab~=4.5
+wandb~=0.25
+# Server dependencies
+flask~=3.1
