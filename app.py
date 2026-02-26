@@ -1,5 +1,11 @@
 from flask import Flask, request, jsonify
 
+
+class Genders(enumerate):
+    MALE = "m"
+    FEMALE = "f"
+
+
 app = Flask(__name__)
 
 # TODO: Load your AI model here, e.g.:
@@ -20,6 +26,10 @@ def predict():
     # return jsonify({"response": result})
 
     return jsonify({"response": None})
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"}), 200
 
 
 if __name__ == "__main__":
