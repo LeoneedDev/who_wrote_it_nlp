@@ -1,4 +1,8 @@
 from flask import Flask, request, jsonify
+import os
+from joblib import load
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class Genders(enumerate):
@@ -8,11 +12,7 @@ class Genders(enumerate):
 
 app = Flask(__name__)
 
-# TODO: Load your AI model here, e.g.:
-# from transformers import pipeline
-# model = pipeline("text-classification", model="<github-or-hf-model>")
-
-model = None
+model = load(os.path.join(BASE_DIR, "model.joblib"))
 
 
 @app.route("/predict", methods=["POST"])
@@ -26,6 +26,7 @@ def predict():
     # return jsonify({"response": result})
 
     return jsonify({"response": None})
+
 
 @app.route("/health", methods=["GET"])
 def health():

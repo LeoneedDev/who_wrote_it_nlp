@@ -10,3 +10,6 @@ jupyterlab~=4.5
 wandb~=0.25
 # Server dependencies
 flask~=3.1
+
+# For model save/load
+joblib~=1.5
