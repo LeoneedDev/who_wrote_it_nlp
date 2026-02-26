@@ -1,4 +1,4 @@
-FROM python:latest
+FROM python:3.14-slim-trixie
 
 WORKDIR /app
 
@@ -11,8 +11,8 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-COPY server.py .
+COPY app.py .
 
 EXPOSE 5000
 
-CMD ["python", "server.py"]
+CMD ["flask", "run"]
