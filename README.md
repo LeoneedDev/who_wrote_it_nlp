@@ -89,6 +89,10 @@ jupyter lab
 # Describtion for the notebooks
 ## **Dataset.ipynb**
 This notebook is used for dataset creation. You can find there code that can be used to create your own dataset for author profiling. This notebook consist of code for data collection, data cleaning. So the resulting dataset is ready for use in the next notebooks.
+The dataset is originally downloaded from https://crisisnlp.qcri.org/tbcov and then cleaned and used to download from Twitter(X) the text of the tweets. For extracting tweets text we use the Twitter API and SDK provided by twitter(X).
+There are two datasets, one with one tweet per author and one with 100 tweets per author.
+They are used to train two different models, one for one tweet per author and one for 100 tweets per author. So we can check the hypotesis that more tweets per author will lead to better performance of the model.
+
 
 ## **EDA.ipynb**
 This notebook is used for exploratory data analysis. You can find there code that can be used to analyze the dataset and visualize the results. This notebook consist of code for data visualization, data analysis, and data preprocessing. So the resulting dataset is ready for use in the next notebooks.
