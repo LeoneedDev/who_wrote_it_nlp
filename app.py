@@ -17,7 +17,7 @@ model = load(os.path.join(BASE_DIR, "model.joblib"))
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    data = request.get_json(force=True, silent=True)
+    data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
 
