@@ -12,6 +12,7 @@ xdk~=0.9
 playwright~=1.58
 fsspec~=2026.2
 huggingface_hub~=1.5
+nltk~=3.9
 # Server dependencies
 flask~=3.1
 

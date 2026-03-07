@@ -4,7 +4,7 @@ Code base for a Bc thiesis
 The thesis is about author profiling, and the main goal is to determmine the author gender based on a text written by the unknown author.
 
 # Code base
-The code base in notebook is written in Python 3.14 and uses the following libraries:
+The code base in notebook is written in Python 3.13 and uses the following libraries:
 - numpy~=2.4
 - pandas~=3.0
 - scipy~=1.17
@@ -14,12 +14,17 @@ The code base in notebook is written in Python 3.14 and uses the following libra
 - seaborn~=0.13
 - jupyterlab~=4.5
 - wandb~=0.25
+- xdk~=0.9
+- playwright~=1.58
+- fsspec~=2026.2
+- huggingface_hub~=1.5
+- nltk~=3.9
 
-Server code is written in Python 3.14 and uses the following libraries:
+Server code is written in Python 3.13 and uses the following libraries:
 - flask~=3.1
 
 # Docker
-The code base is dockerized using Dockerfile. The Docker image is based on python:3.14-slim-trixie and exposes port 5000 for the server. The requirements are installed using pip and the app.py file is copied to the container. The server is started using the command "flask run".
+The code base is dockerized using Dockerfile. The Docker image is based on python:3.13-slim-trixie and exposes port 5000 for the server. The requirements are installed using pip and the app.py file is copied to the container. The server is started using the command "flask run".
 
 # Docker image
 Workflow will automatically build a Docker image and push it to github container registry.
