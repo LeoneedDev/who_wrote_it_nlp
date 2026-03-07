@@ -11,20 +11,22 @@ from nltk.tokenize import TweetTokenizer
 # 7. Removed punctuations: Although we did not remove the punctuations in our pre- processing function, scikit-learns TfidfVectorizer function completely ignores punctuation.3
 # 8. Stop words were detected by document frequency and removed. Any n-gram that occurred in all documents was considered a stop word and was ignored.
 
-tweet_tok = TweetTokenizer(
-    preserve_case=False, reduce_len=True, strip_handles=False
-)
-URL_RE = re.compile(r"""(?ix)\b((?:https?://|www\.)\S+)\b""")
-MENTION_RE = re.compile(r"(?i)(?<!\w)@\w+")
-LF_RE = re.compile(r"\r\n|\r|\n")
-REPEAT_CHARS_RE = re.compile(r"(.)\1{2,}", flags=re.UNICODE)
 
+class Preprocessor:
+    def __init__(self):
+        self.tweet_tok = TweetTokenizer(
+            preserve_case=False, reduce_len=True, strip_handles=False
+        )
+        self.URL_RE = re.compile(r"""(?ix)\b((?:https?://|www\.)\S+)\b""")
+        self.MENTION_RE = re.compile(r"(?i)(?<!\w)@\w+")
+        self.LF_RE = re.compile(r"\r\n|\r|\n")
+        self.REPEAT_CHARS_RE = re.compile(r"(.)\1{2,}", flags=re.UNICODE)
 
-def tokenize_one_tweet(text: str) -> list[str]:
-    text = LF_RE.sub(" <LineFeed> ", text)
-    text = text.lower()
-    text = REPEAT_CHARS_RE.sub(lambda m: m.group(1) * 3, text)
-    text = URL_RE.sub(" <URLURL> ", text)
-    text = MENTION_RE.sub(" <UsernameMention> ", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return tweet_tok.tokenize(text)
+    def tokenize_one_tweet(self, text: str) -> list[str]:
+        text = self.LF_RE.sub(" <LineFeed> ", text)
+        text = text.lower()
+        text = self.REPEAT_CHARS_RE.sub(lambda m: m.group(1) * 3, text)
+        text = self.URL_RE.sub(" <URLURL> ", text)
+        text = self.MENTION_RE.sub(" <UsernameMention> ", text)
+        text = re.sub(r"\s+", " ", text).strip()
+        return self.tweet_tok.tokenize(text)
