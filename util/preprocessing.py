@@ -1,6 +1,3 @@
-import re
-from nltk.tokenize import TweetTokenizer
-
 # preprocessing steps:
 # 1. Replaced the linefeed characters with <LineFeed>.
 # 2. Concatenated all 100 tweets of each author into one string, with an <EndOfTweet> tag added to the end of each tweet.
@@ -12,21 +9,39 @@ from nltk.tokenize import TweetTokenizer
 # 8. Stop words were detected by document frequency and removed. Any n-gram that occurred in all documents was considered a stop word and was ignored.
 
 
-class Preprocessor:
-    def __init__(self):
+import re
+from nltk.tokenize import TweetTokenizer
+from sklearn.base import BaseEstimator, TransformerMixin
+
+
+class TweetPreprocessor(BaseEstimator, TransformerMixin):
+
+    def __init__(self, text_column="text"):
+        self.text_column = text_column
         self.tweet_tok = TweetTokenizer(
-            preserve_case=False, reduce_len=True, strip_handles=False
+            preserve_case=False,
+            reduce_len=True,
+            strip_handles=False
         )
+
         self.URL_RE = re.compile(r"""(?ix)\b((?:https?://|www\.)\S+)\b""")
         self.MENTION_RE = re.compile(r"(?i)(?<!\w)@\w+")
         self.LF_RE = re.compile(r"\r\n|\r|\n")
         self.REPEAT_CHARS_RE = re.compile(r"(.)\1{2,}", flags=re.UNICODE)
 
-    def tokenize_one_tweet(self, text: str) -> list[str]:
+    def preprocess(self, text: str) -> str:
         text = self.LF_RE.sub(" <LineFeed> ", text)
         text = text.lower()
         text = self.REPEAT_CHARS_RE.sub(lambda m: m.group(1) * 3, text)
         text = self.URL_RE.sub(" <URLURL> ", text)
         text = self.MENTION_RE.sub(" <UsernameMention> ", text)
         text = re.sub(r"\s+", " ", text).strip()
-        return self.tweet_tok.tokenize(text)
+
+        tokens = self.tweet_tok.tokenize(text)
+        return " ".join(tokens)
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X[self.text_column].apply(self.preprocess)
