@@ -209,3 +209,7 @@ __marimo__/
 
 notebooks/datasets/*
 !notebooks/datasets/.gitkeep
+
+wandb
+models/*
+!models/.gitkeep

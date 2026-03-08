@@ -16,8 +16,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 class TweetPreprocessor(BaseEstimator, TransformerMixin):
 
-    def __init__(self, text_column="text"):
-        self.text_column = text_column
+    def __init__(self):
         self.tweet_tok = TweetTokenizer(
             preserve_case=False,
             reduce_len=True,
@@ -44,4 +43,4 @@ class TweetPreprocessor(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        return X[self.text_column].apply(self.preprocess)
+        return X.apply(self.preprocess)
