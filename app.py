@@ -12,7 +12,7 @@ class Genders(enumerate):
 
 app = Flask(__name__)
 
-model = load(os.path.join(BASE_DIR, "model.joblib"))
+model = load(os.path.join(BASE_DIR, "model.pckl"))
 
 
 @app.route("/predict", methods=["POST"])
