@@ -39,8 +39,8 @@ class TweetPreprocessor(BaseEstimator, TransformerMixin):
         tokens = self.tweet_tok.tokenize(text)
         return " ".join(tokens)
 
-    def fit(self, X, y=None):
+    def fit(self, x=None, y=None):
         return self
 
-    def transform(self, X):
-        return X.apply(self.preprocess)
+    def transform(self, x):
+        return x.apply(self.preprocess)
