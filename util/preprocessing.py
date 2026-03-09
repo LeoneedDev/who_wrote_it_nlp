@@ -12,6 +12,7 @@
 import re
 from nltk.tokenize import TweetTokenizer
 from sklearn.base import BaseEstimator, TransformerMixin
+import pandas as pd
 
 
 class TweetPreprocessor(BaseEstimator, TransformerMixin):
@@ -43,4 +44,7 @@ class TweetPreprocessor(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, x):
-        return x.apply(self.preprocess)
+        if hasattr(x, "apply"):
+            return x.apply(self.preprocess)
+        else:
+            return [self.preprocess(text) for text in x]
