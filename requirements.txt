@@ -14,6 +14,8 @@ fsspec~=2026.2
 huggingface_hub~=1.5
 nltk~=3.9
 nbstripout~=0.9
+zenodo-get~=3.0
+lxml~=6.0
 # Server dependencies
 flask~=3.1
 
