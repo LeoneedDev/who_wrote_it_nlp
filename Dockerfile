@@ -1,7 +1,7 @@
 FROM python:3.13-slim-trixie
 
 ARG MODEL_PATH=model.joblib 
-ARG MODEL_URL
+ARG MODEL_URL="default_url" #TODO: set the default URL for the model
 
 WORKDIR /app
 

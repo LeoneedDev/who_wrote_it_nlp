@@ -19,9 +19,29 @@ The code base in notebook is written in Python 3.13 and uses the following libra
 - fsspec~=2026.2
 - huggingface_hub~=1.5
 - nltk~=3.9
+- nbstripout~=0.9
+- joblib~=1.5
 
 Server code is written in Python 3.13 and uses the following libraries:
 - flask~=3.1
+
+# Env configuration
+The project uses the following environment variables:
+
+| Variable | Where used | Required | Default | Description |
+|----------|-----------|----------|---------|-------------|
+| `MODEL_PATH` | `app.py` | No | `model.joblin` | Path to the trained model file loaded by the Flask server |
+| `WANDB_TOKEN` | `Hyperparams.ipynb` | Yes (for logging) | — | Weights & Biases API token for logging hyperparameter tuning and training results |
+| `TWITTER_BEARER_TOKEN` | `Dataset.ipynb` | Yes (for data collection) | — | Twitter (X) API bearer token used to download tweet texts. Set manually in the notebook |
+| `HUGGINGFACE_HUB_TOKEN` | `Training.ipynb` | Yes (for model saving) | — | Hugging Face Hub API token for uploading the trained model to your repo |
+| `RANDOM_SEED` | `Hyperparams.ipynb`, `Tr | No | 1930912391 | Random seed for reproducibility in hyperparameter tuning |
+
+**Docker build arguments** (set at build time, not runtime):
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `MODEL_PATH` | `model.joblib` | Path to the local model file to copy into the Docker image |
+| `MODEL_URL` | — | URL to download the model from if the local file is not available |
 
 # Docker
 The code base is dockerized using Dockerfile. The Docker image is based on python:3.13-slim-trixie and exposes port 5000 for the server. The requirements are installed using pip and the app.py file is copied to the container. The server is started using the command "flask run".
@@ -32,6 +52,12 @@ Latest image can be found here:
 **ghcr.io/LeoneedDev/who_wrote_it:latest**
 
 # Usage
+## Running notebooks
+To run the notebooks, first you need to init the environment and install the required libraries. You can do this by running the following commands in your terminal:
+```bash
+just init
+```
+Its will init .env file where you can set the required environment variables and also creates a Python virtual environment and install the required libraries.
 ## Use over interface
 To run the application locally, you can use Docker:
 ```bash
@@ -94,23 +120,45 @@ jupyter lab
 # Describtion for the notebooks
 ## **Dataset.ipynb**
 This notebook is used for dataset creation. You can find there code that can be used to create your own dataset for author profiling. This notebook consist of code for data collection, data cleaning. So the resulting dataset is ready for use in the next notebooks.
-The dataset is originally downloaded from https://crisisnlp.qcri.org/tbcov and then cleaned and used to download from Twitter(X) the text of the tweets. For extracting tweets text we use the Twitter API and SDK provided by twitter(X).
-There are two datasets, one with one tweet per author and one with 100 tweets per author.
+The dataset is originally downloaded from [TBCOV](https://crisisnlp.qcri.org/tbcov) and then cleaned and used to download from Twitter(X) the text of the tweets. For extracting tweets text we use the Twitter API and SDK provided by twitter(X).
+There are two datasets, one with 1 tweet per author and one with 100 tweets per author ([PAN CLEF Dataset](https://zenodo.org/records/3692340)).
 They are used to train two different models, one for one tweet per author and one for 100 tweets per author. So we can check the hypotesis that more tweets per author will lead to better performance of the model.
 
 
 ## **EDA.ipynb**
-This notebook is used for exploratory data analysis. You can find there code that can be used to analyze the dataset and visualize the results. This notebook consist of code for data visualization, data analysis, and data preprocessing. So the resulting dataset is ready for use in the next notebooks.
+This notebook is used for exploratory data analysis. It performs text feature engineering (19 features including lexical diversity, emoji/mention/hashtag counts, and punctuation ratios), visualizations (boxplots, histplots, scatter plots, QQ-plots, pairplots), n-gram analysis (character, word, and skip n-grams), and statistical tests (Mann-Whitney U for numerical features, Chi-square with Cramér's V for categorical/word features) to identify gender-discriminative patterns in tweet text.
 
-# **Hyperparams.ipynb**
-This notebook is used for hyperparameter tuning. You can find there code that can be used to tune the hyperparameters of the model. This notebook consist of code for hyperparameter tuning, model evaluation, and model selection. So the resulting model is ready for use in the next notebooks. 
+
+## **Hyperparams.ipynb**
+Need for work:
+- dataset with 1 tweet per author
+This notebook is used for hyperparameter tuning of the classification pipeline: `TweetPreprocessor → FeatureUnion [TfidfVectorizer(word) + TfidfVectorizer(char)] → TruncatedSVD → LinearSVC`. It performs two-phase search: first a Randomized Search (500 iterations, 4-fold stratified CV, F1-macro scoring) to explore the parameter space, then a Grid Search to fine-tune around the best parameters found.
 
 You can also provide a wandb token to log the results of hyperparameter tuning to Weights & Biases.
 Best model from hyperparameter tuning is saved in wandb, so we dont need to retrain it again in the next notebook.
-At then end of notebook you can save the best model from hyperparameter tuning locally. It will save time and not requare retraining the model in the next notebook.
+At the end of notebook you can save the best model from hyperparameter tuning locally. It will save time and not require retraining the model in the next notebook.
 
-# **Training.ipynb**
-This notebook is used for model training. You can find there code that can be used to train the model. This notebook consist of code for model training, model evaluation, and model selection. So the resulting model is ready for use in the next notebooks. 
+## **Training.ipynb**
+Need for work:
+- dataset with 1 tweet per author
+- best hyperparameters from hyperparameter tuning
+This notebook is used for final model training. It merges the training and validation sets (since LinearSVC has no validation phase), applies the best hyperparameters from tuning, and trains the same pipeline (`TweetPreprocessor → FeatureUnion [TfidfVectorizer(word) + TfidfVectorizer(char)] → TruncatedSVD → LinearSVC`). Evaluation on the test set includes a classification report (precision, recall, F1) and a confusion matrix visualization.
 
 You can also provide a wandb token to log the results of model training to Weights & Biases and save the best one in wandb artifacts.
 At the end of notebook you can save the best model from model training locally.
+
+## **Hypotesis.ipynb**
+Needs for work: 
+- dataset with 1 tweet per author
+- trained model on dataset with 1 tweet per author
+
+This notebook is reserved for hypothesis testing. It is intended to verify whether using more tweets per author leads to better model performance and other statistical hypotheses related to author profiling.
+
+# Preprocessing
+The `util/preprocessing.py` module contains the `TweetPreprocessor` class, which is used as a scikit-learn compatible transformer for text preprocessing. It performs the following steps:
+1. Replaces linefeed characters with `<LineFeed>`
+2. Lowercases the text
+3. Trims repeated characters (sequences of 3+ reduced to 3)
+4. Replaces URLs with `<URLURL>`
+5. Replaces @username mentions with `<UsernameMention>`
+6. Tokenizes the text using NLTK's `TweetTokenizer`
