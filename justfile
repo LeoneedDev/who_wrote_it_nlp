@@ -43,3 +43,23 @@ init:
 
     pip install --upgrade pip
     pip install -r requirements.txt
+
+# run docker server for predictions on port(default: 5000)
+run port="5000":
+    docker build -t who-wrote-it-app .
+    docker run -p {port}:5000 who-wrote-it-app
+
+# remove the docker image
+prune:
+    docker rmi who-wrote-it-app
+
+# use the model to predict on new data
+predict text="" port="5000":
+    if [ -z "{text}" ]; then
+        echo "Please provide text to predict, e.g. just predict text='Hello world'"
+        exit 1
+    fi
+
+    response=$(curl -s -X POST http://localhost:{port}/predict -H "Content-Type: application/json" -d "{\"text\": \"{text}\"}")
+    echo "Prediction response: $response"
+    

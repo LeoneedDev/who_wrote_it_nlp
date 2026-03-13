@@ -1,3 +1,5 @@
+import http
+
 from flask import Flask, request, jsonify
 import os
 from joblib import load
@@ -19,7 +21,7 @@ model = load(os.path.join(BASE_DIR, model_path))
 def predict():
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), http.HTTPStatus.BAD_REQUEST
 
     # TODO: Pass data to the model and return the result, e.g.:
     # result = model(data.get("text", ""))
