@@ -20,7 +20,8 @@ The code base in notebook is written in Python 3.13 and uses the following libra
 - huggingface_hub~=1.5
 - nltk~=3.9
 - nbstripout~=0.9
-- joblib~=1.5
+- zenodo-get~=3.0
+- lxml~=6.0
 
 Server code is written in Python 3.13 and uses the following libraries:
 - flask~=3.1
@@ -132,11 +133,18 @@ This notebook is used for exploratory data analysis. It performs text feature en
 ## **Hyperparams.ipynb**
 Need for work:
 - dataset with 1 tweet per author
-This notebook is used for hyperparameter tuning of the classification pipeline: `TweetPreprocessor → FeatureUnion [TfidfVectorizer(word) + TfidfVectorizer(char)] → TruncatedSVD → LinearSVC`. It performs two-phase search: first a Randomized Search (500 iterations, 4-fold stratified CV, F1-macro scoring) to explore the parameter space, then a Grid Search to fine-tune around the best parameters found.
+This notebook performs hyperparameter tuning for the classification pipeline:
+`TweetPreprocessor → FeatureUnion [TfidfVectorizer(word) + TfidfVectorizer(char)] → TruncatedSVD → LinearSVC`.
 
-You can also provide a wandb token to log the results of hyperparameter tuning to Weights & Biases.
-Best model from hyperparameter tuning is saved in wandb, so we dont need to retrain it again in the next notebook.
-At the end of notebook you can save the best model from hyperparameter tuning locally. It will save time and not require retraining the model in the next notebook.
+The search is done in two phases:
+1. Randomized Search (500 iterations, 4-fold stratified CV, F1-macro scoring) to explore a broad parameter space.
+2. Grid Search to refine the best region found by the randomized phase.
+
+Within these phases, tuning is performed sequentially: first TF-IDF parameters, then SVD parameters, and finally classifier (`LinearSVC`) parameters.
+
+You can provide a `WANDB_TOKEN` to log all tuning results to Weights & Biases (W&B), including stage metrics and best parameters.
+The best model is saved as a W&B artifact, so you can reuse it in the next notebook without running the full tuning again.
+You can also export the best tuned model locally at the end of the notebook to speed up the next training steps.
 
 ## **Training.ipynb**
 Need for work:
