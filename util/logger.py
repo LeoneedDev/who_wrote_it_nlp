@@ -9,7 +9,7 @@ def wandb_log_search_results(random_search: RandomizedSearchCV | GridSearchCV, r
     run = wandb.init(name=run_name, job_type=job_type,
                      project=project_name, entity=entity_name)
     df = pd.DataFrame(random_search.cv_results_)
-    cols = ["mean_test_score", "mean_train_score"] + \
+    cols = ["mean_test_score"] + \
         [col for col in df.columns if col.startswith("param_")]
     df = df[cols]
 
