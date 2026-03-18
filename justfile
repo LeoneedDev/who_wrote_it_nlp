@@ -55,6 +55,10 @@ prune:
 
 # use the model to predict on new data
 predict text="" port="5000":
+    # Ensure server is healthy before prediction
+    if ! just health port={port}; then
+        exit 1
+    fi
     if [ -z "{text}" ]; then
         echo "Please provide text to predict, e.g. just predict text='Hello world'"
         exit 1
@@ -63,3 +67,14 @@ predict text="" port="5000":
     response=$(curl -s -X POST http://localhost:{port}/predict -H "Content-Type: application/json" -d "{\"text\": \"{text}\"}")
     echo "Prediction response: $response"
     
+health port="5000":
+    response=$(curl -s -w "\n%{http_code}" http://localhost:{port}/health)
+    status_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | sed '$d')
+
+    if [ "$status_code" != "200" ]; then
+        echo "Health check failed (status: $status_code). Run: just run"
+        exit 1
+    fi
+
+    echo "Health check response: $body"
