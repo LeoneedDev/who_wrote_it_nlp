@@ -15,6 +15,8 @@ def wandb_log_search_results(random_search: RandomizedSearchCV | GridSearchCV, r
 
     table = wandb.Table(dataframe=df)
     run.log({"search_results": table})
+    run.log({"best_params": random_search.best_params_})
+    run.log({"best_score": random_search.best_score_})
     run.finish()
 
 
