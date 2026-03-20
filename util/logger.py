@@ -3,6 +3,7 @@ from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 from sklearn.base import BaseEstimator
 import pandas as pd
 import joblib
+import os
 
 
 def wandb_log_search_results(random_search: RandomizedSearchCV | GridSearchCV, run_name: str, job_type: str, project_name: str = "who-wrote-it-nlp", entity_name: str = "who-wrote-it-nlp"):
@@ -30,7 +31,7 @@ def wandb_save_model(model: BaseEstimator, model_path: str, project_name: str = 
         raise ValueError("Model path is None")
 
     run = wandb.init(project=project_name, entity=entity_name)
-    artifact = wandb.Artifact(model_path, type="model")
+    artifact = wandb.Artifact(name=os.path.basename(model_path), type="model")
     artifact.add_file(model_path)
     run.log_artifact(artifact)
     run.finish()
