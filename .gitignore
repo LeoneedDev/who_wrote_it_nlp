@@ -211,5 +211,6 @@ notebooks/datasets/*
 !notebooks/datasets/.gitkeep
 
 wandb
-models/*
-!models/.gitkeep
+notebooks/models/*
+!notebooks/models/.gitkeep
+
