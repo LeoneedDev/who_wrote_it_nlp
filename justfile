@@ -46,8 +46,19 @@ init:
 
 # run docker server for predictions on port(default: 5000)
 run port="5000":
+    if [! just check_model_exists]; then
+        echo "Model not found. Downloading model..."
+        python util/model_downloder.py
+    fi
     docker build -t who-wrote-it-app .
     docker run -p {port}:5000 who-wrote-it-app
+
+[private]
+check_model_exists:
+    if [ ! -f "notebooks/models/model.joblib" ]; then
+        echo "Model not found. Please run: just download_model"
+        exit 1
+    fi
 
 # remove the docker image
 prune:
