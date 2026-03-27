@@ -1,12 +1,12 @@
 FROM python:3.13-slim-trixie
 
-ARG MODEL_PATH=model.joblib 
+ARG MODEL_PATH=notebooks/models/model.joblib
 ARG MODEL_URL="default_url" #TODO: set the default URL for the model
 
 WORKDIR /app
 
 # Install git so AI models can be installed directly from GitHub repositories
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y git curl && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN --mount=type=bind,source=${MODEL_PATH},target=/tmp/model.joblib,ro \
@@ -24,7 +24,8 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
+COPY util/ util/
 
 EXPOSE 5000
 
-CMD ["flask", "run"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]

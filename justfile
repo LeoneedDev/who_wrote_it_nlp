@@ -42,54 +42,70 @@ init:
     pip install -r requirements.txt
 
 # run docker server for predictions on port(default: 5000)
-run port="5000":
+run:
     #!/usr/bin/env bash
     set -euo pipefail
     if ! just check_model_exists >/dev/null 2>&1; then
         echo "Model not found. Downloading model..."
-        python util/model_downloder.py
+        if [ -x "venv/bin/python" ]; then
+            PYTHON_BIN="venv/bin/python"
+        elif command -v python >/dev/null 2>&1; then
+            PYTHON_BIN="python"
+        elif command -v python3 >/dev/null 2>&1; then
+            PYTHON_BIN="python3"
+        else
+            echo "Python interpreter not found. Run: just init"
+            exit 1
+        fi
+
+        "$PYTHON_BIN" util/model_downloder.py
     fi
-    docker build -t who-wrote-it-app .
-    docker run -p {port}:5000 who-wrote-it-app
+
+    docker compose up -d --build
 
 [private]
 check_model_exists:
     #!/usr/bin/env bash
     set -euo pipefail
     if [ ! -f "notebooks/models/model.joblib" ]; then
-        echo "Model not found. Please run: just download_model"
         exit 1
     fi
 
 # remove the docker image
 prune:
-    docker rmi who-wrote-it-app
+    docker compose down --rmi local --volumes --remove-orphans
 
 # use the model to predict on new data
-predict text="" port="5000":
+predict text="":
     #!/usr/bin/env bash
     set -euo pipefail
-    if ! just health port={port}; then
-        exit 1
-    fi
-    if [ -z "{text}" ]; then
+    if [ -z "{{ text }}" ]; then
         echo "Please provide text to predict, e.g. just predict text='Hello world'"
         exit 1
     fi
 
-    response=$(curl -s -X POST http://localhost:{port}/predict -H "Content-Type: application/json" -d "{\"text\": \"{text}\"}")
+    response=$(curl -s -X POST http://localhost:5000/predict -H "Content-Type: application/json" -d "{\"text\": \"{{ text }}\"}")
     echo "Prediction response: $response"
 
-health port="5000":
+health:
     #!/usr/bin/env bash
     set -euo pipefail
-    response=$(curl -s -w "\n%{http_code}" http://localhost:{port}/health)
-    status_code=$(echo "$response" | tail -n1)
-    body=$(echo "$response" | sed '$d')
+    max_attempts=10
+    attempt=1
 
-    if [ "$status_code" != "200" ]; then
-        echo "Health check failed (status: $status_code). Run: just run"
-        exit 1
-    fi
+    while [ "$attempt" -le "$max_attempts" ]; do
+        response=$(curl -s -w "\n%{http_code}" --max-time 3 http://localhost:5000/health || true)
+        status_code=$(echo "$response" | tail -n1)
+        body=$(echo "$response" | sed '$d')
 
-    echo "Health check response: $body"
+        if [ "$status_code" = "200" ]; then
+            echo "Health check response: $body"
+            exit 0
+        fi
+
+        sleep 1
+        attempt=$((attempt + 1))
+    done
+
+    echo "Health check failed after $max_attempts attempts (last status: $status_code). Run: just run"
+    exit 1
