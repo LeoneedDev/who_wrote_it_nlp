@@ -1,13 +1,11 @@
 # preprocessing steps:
-# 1. Replaced the linefeed characters with <LineFeed>.
-# 2. Concatenated all 100 tweets of each author into one string, with an <EndOfTweet> tag added to the end of each tweet.
+# 1. Concatenated all 100 tweets of each author into one string, with an <EndOfTweet> tag added to the end of each tweet (if applicable).
+# 2. Replaced the linefeed characters with <LineFeed>.
 # 3. Lowercased the characters
 # 4. Trimmed the repeated characters: Replaced repeated character sequences of length 3 or greater with sequences of length 3
 # 5. Replaced URLs with <URLURL>
 # 6. Replaced @username mentions (i.e., Twitter handles) with <UsernameMention>
 # 7. Removed punctuations: Although we did not remove the punctuations in our pre- processing function, scikit-learns TfidfVectorizer function completely ignores punctuation.3
-# 8. Stop words were detected by document frequency and removed. Any n-gram that occurred in all documents was considered a stop word and was ignored.
-
 
 import re
 from nltk.tokenize import TweetTokenizer
@@ -17,12 +15,14 @@ import pandas as pd
 
 class TweetPreprocessor(BaseEstimator, TransformerMixin):
 
-    def __init__(self):
+    def __init__(self, user_id_col: str = "user_id", text_col: str = "text"):
         self.tweet_tok = TweetTokenizer(
             preserve_case=False,
             reduce_len=True,
             strip_handles=False
         )
+        self.user_id_col = user_id_col
+        self.text_col = text_col
 
         self.URL_RE = re.compile(r"""(?ix)\b((?:https?://|www\.)\S+)\b""")
         self.MENTION_RE = re.compile(r"(?i)(?<!\w)@\w+")
@@ -41,6 +41,12 @@ class TweetPreprocessor(BaseEstimator, TransformerMixin):
         return " ".join(tokens)
 
     def fit(self, x=None, y=None):
+        if isinstance(x, (pd.DataFrame, pd.Series)):
+            x = (
+                x.groupby(self.user_id_col)[self.text_col]
+                .apply(lambda s: " <EndOfTweet> ".join(s.astype(str)) + " <EndOfTweet>")
+                .reset_index(name=self.text_col)
+            )
         return self
 
     def transform(self, x):
