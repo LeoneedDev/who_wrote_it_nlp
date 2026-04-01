@@ -54,4 +54,5 @@ class TweetPreprocessor(BaseEstimator, TransformerMixin):
                 self.text_col].apply(self._concat_tweets)
             return texts.apply(self._preprocess)
         else:
-            raise ValueError("Input must be a pandas DataFrame.")
+            print("Input is not a DataFrame. Skipping concatenation step.")
+            return x.astype(str).apply(self._preprocess)
