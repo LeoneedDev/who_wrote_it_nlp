@@ -14,7 +14,6 @@ import pandas as pd
 
 
 class TweetPreprocessor(BaseEstimator, TransformerMixin):
-
     def __init__(self, user_id_col: str = "user_id", text_col: str = "text"):
         self.tweet_tok = TweetTokenizer(
             preserve_case=False,
@@ -29,7 +28,13 @@ class TweetPreprocessor(BaseEstimator, TransformerMixin):
         self.LF_RE = re.compile(r"\r\n|\r|\n")
         self.REPEAT_CHARS_RE = re.compile(r"(.)\1{2,}", flags=re.UNICODE)
 
-    def preprocess(self, text: str) -> str:
+    def _concat_tweets(self, tweets) -> str:
+        tweets = [str(t) for t in tweets]
+        if not tweets:
+            return ""
+        return " <EndOfTweet> ".join(tweets) + " <EndOfTweet>"
+
+    def _preprocess(self, text: str) -> str:
         text = self.LF_RE.sub(" <LineFeed> ", text)
         text = text.lower()
         text = self.REPEAT_CHARS_RE.sub(lambda m: m.group(1) * 3, text)
@@ -41,16 +46,12 @@ class TweetPreprocessor(BaseEstimator, TransformerMixin):
         return " ".join(tokens)
 
     def fit(self, x=None, y=None):
-        if isinstance(x, (pd.DataFrame, pd.Series)):
-            x = (
-                x.groupby(self.user_id_col)[self.text_col]
-                .apply(lambda s: " <EndOfTweet> ".join(s.astype(str)) + " <EndOfTweet>")
-                .reset_index(name=self.text_col)
-            )
         return self
 
     def transform(self, x):
-        if hasattr(x, "apply"):
-            return x.apply(self.preprocess)
+        if isinstance(x, pd.DataFrame):
+            texts = x.groupby(self.user_id_col, sort=False)[
+                self.text_col].apply(self._concat_tweets)
+            return texts.apply(self._preprocess)
         else:
-            return [self.preprocess(text) for text in x]
+            raise ValueError("Input must be a pandas DataFrame.")
