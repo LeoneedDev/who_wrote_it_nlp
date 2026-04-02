@@ -9,12 +9,13 @@
 
 import re
 from nltk.tokenize import TweetTokenizer
+from numpy import ndarray
 from sklearn.base import BaseEstimator, TransformerMixin
 import pandas as pd
 
 
 class TweetPreprocessor(BaseEstimator, TransformerMixin):
-    def __init__(self, user_id_col: str = "user_id", text_col: str = "text"):
+    def __init__(self, user_id_col: str = "user_id", text_col: str = "text", gender_col: str = "gender_label"):
         self.tweet_tok = TweetTokenizer(
             preserve_case=False,
             reduce_len=True,
@@ -22,6 +23,7 @@ class TweetPreprocessor(BaseEstimator, TransformerMixin):
         )
         self.user_id_col = user_id_col
         self.text_col = text_col
+        self.gender_col = gender_col
 
         self.URL_RE = re.compile(r"""(?ix)\b((?:https?://|www\.)\S+)\b""")
         self.MENTION_RE = re.compile(r"(?i)(?<!\w)@\w+")
@@ -49,10 +51,26 @@ class TweetPreprocessor(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, x):
-        if isinstance(x, pd.DataFrame):
-            texts = x.groupby(self.user_id_col, sort=False)[
-                self.text_col].apply(self._concat_tweets)
-            return texts.apply(self._preprocess)
+        if hasattr(x, "apply"):
+            return x.apply(self._preprocess)
+
+        return [self._preprocess(str(t)) for t in x]
+
+    def concatenate(self, df: pd.DataFrame):
+        if isinstance(df, pd.DataFrame):
+            if self.user_id_col not in df.columns:
+                raise KeyError(f"Missing required column: {self.user_id_col}")
+            if self.text_col not in df.columns:
+                raise KeyError(f"Missing required column: {self.text_col}")
+            if self.gender_col not in df.columns:
+                raise KeyError(f"Missing required column: {self.gender_col}")
+
+            df = df.groupby(self.user_id_col).agg({
+                self.text_col: self._concat_tweets,
+                self.gender_col: "first"
+            }).reset_index()
+
+            return df
         else:
             print("Input is not a DataFrame. Skipping concatenation step.")
-            return x.astype(str).apply(self._preprocess)
+            return None
