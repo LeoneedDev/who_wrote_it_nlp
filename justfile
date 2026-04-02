@@ -111,7 +111,7 @@ download_model model_type="svc":
         exit 1
     fi
 
-    "$PYTHON_BIN" util/model_downloder.py
+    "$PYTHON_BIN" util/model_downloder.py --model-type {{ model_type }}
 
 # convenience aliases for downloading specific model LinearSVC
 d_svc:
