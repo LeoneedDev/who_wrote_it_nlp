@@ -42,24 +42,9 @@ init:
     pip install -r requirements.txt
 
 # run docker server for predictions on port(default: 5000)
-run:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if ! just check_model_exists >/dev/null 2>&1; then
-        echo "Model not found. Downloading model..."
-        if [ -x "venv/bin/python" ]; then
-            PYTHON_BIN="venv/bin/python"
-        elif command -v python >/dev/null 2>&1; then
-            PYTHON_BIN="python"
-        elif command -v python3 >/dev/null 2>&1; then
-            PYTHON_BIN="python3"
-        else
-            echo "Python interpreter not found. Run: just init"
-            exit 1
-        fi
-
-        "$PYTHON_BIN" util/model_downloder.py
-    fi
+[arg("model_type", long="model_type", pattern="svc|randomforest|lr", help="svc | randomforest | lr")]
+run model_type="svc":
+    just download_model --model_type {{ model_type }}
 
     docker compose up -d --build
 
@@ -109,3 +94,33 @@ health:
 
     echo "Health check failed after $max_attempts attempts (last status: $status_code). Run: just run"
     exit 1
+
+[arg("model_type", long="model_type", pattern="svc|randomforest|lr", help="svc | randomforest | lr")]
+[private]
+download_model model_type="svc":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -x "venv/bin/python" ]; then
+        PYTHON_BIN="venv/bin/python"
+    elif command -v python >/dev/null 2>&1; then
+        PYTHON_BIN="python"
+    elif command -v python3 >/dev/null 2>&1; then
+        PYTHON_BIN="python3"
+    else
+        echo "Python interpreter not found. Run: just init"
+        exit 1
+    fi
+
+    "$PYTHON_BIN" util/model_downloder.py
+
+# convenience aliases for downloading specific model LinearSVC
+d_svc:
+    just download_model --model_type svc
+
+# convenience aliases for downloading specific model RandomForest
+d_rf:
+    just download_model --model_type randomforest
+
+# convenience aliases for downloading specific model LogisticRegression
+d_lr:
+    just download_model --model_type lr
