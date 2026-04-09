@@ -11,9 +11,9 @@ REPO_ID = "qg2020252627/twitter_author_profiling_by_gender_nlp"
 
 def arg_parse_model_type(model_type: str) -> str:
     switch = {
-        "LinearSVC": "model_LinearSVC.joblib",
-        "LogisticRegression": "model_LogisticRegression.joblib",
-        "RandomForest": "model_RandomForest.joblib",
+        "svc": "model_LinearSVC.joblib",
+        "lr": "model_LogisticRegression.joblib",
+        "rf": "model_RandomForest.joblib",
     }
 
     if model_type in switch:
@@ -21,18 +21,6 @@ def arg_parse_model_type(model_type: str) -> str:
     else:
         raise ValueError(
             f"Unsupported model type: {model_type}. Supported types are: {', '.join(switch.keys())}.")
-
-
-def normalize_model_filename(model_type: str) -> str:
-    selected = (model_type or "").strip()
-    if not selected:
-        return "model_LinearSVC.joblib"
-
-    if selected.endswith(".joblib"):
-        return selected
-    if selected.startswith("model_"):
-        return f"{selected}.joblib"
-    return f"model_{selected}.joblib"
 
 
 def set_as_main_model(source_model: Path, target_model: Path) -> None:
@@ -56,7 +44,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    requested_filename = normalize_model_filename(args.model_type)
+    requested_filename = arg_parse_model_type(args.model_type)
     target_model = MODELS_DIR / "model.joblib"
 
     if os.path.exists(requested_filename):

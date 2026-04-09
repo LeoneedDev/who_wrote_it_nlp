@@ -42,7 +42,7 @@ init:
     pip install -r requirements.txt
 
 # run docker server for predictions on port(default: 5000)
-[arg("model_type", long="model_type", pattern="svc|randomforest|lr", help="svc | randomforest | lr")]
+[arg("model_type", long="model_type", pattern="svc|rf|lr", help="svc | rf | lr")]
 run model_type="svc":
     just download_model --model_type {{ model_type }}
 
@@ -95,7 +95,7 @@ health:
     echo "Health check failed after $max_attempts attempts (last status: $status_code). Run: just run"
     exit 1
 
-[arg("model_type", long="model_type", pattern="svc|randomforest|lr", help="svc | randomforest | lr")]
+[arg("model_type", long="model_type", pattern="svc|rf|lr", help="svc | rf | lr")]
 [private]
 download_model model_type="svc":
     #!/usr/bin/env bash
@@ -119,7 +119,7 @@ d_svc:
 
 # convenience aliases for downloading specific model RandomForest
 d_rf:
-    just download_model --model_type randomforest
+    just download_model --model_type rf
 
 # convenience aliases for downloading specific model LogisticRegression
 d_lr:
