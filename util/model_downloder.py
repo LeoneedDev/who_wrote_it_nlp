@@ -1,39 +1,30 @@
 import argparse
 import os
-import shutil
 from pathlib import Path
 
-from huggingface_hub import snapshot_download
+from huggingface_hub import hf_hub_download
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = PROJECT_ROOT / "notebooks" / "models"
+REPO_ID = "qg2020252627/twitter_author_profiling_by_gender_nlp"
 
 
-def resolve_target_candidate(model_type: str | None = None) -> Path | None:
-    preferred = [
-        MODELS_DIR / "model_LinearSVC.joblib",
-        MODELS_DIR / "model_LogisticRegression.joblib",
-        MODELS_DIR / "model_RandomForestClassifier.joblib",
-    ]
+def normalize_model_filename(model_type: str) -> str:
+    selected = (model_type or "").strip()
+    if not selected:
+        return "model_LinearSVC.joblib"
 
-    selected_model_type = (model_type or "").strip()
-    if selected_model_type:
-        specified_candidates = [
-            MODELS_DIR / selected_model_type,
-            MODELS_DIR / f"{selected_model_type}.joblib",
-            MODELS_DIR / f"model_{selected_model_type}.joblib",
-        ]
-        for candidate in specified_candidates:
-            if candidate.exists():
-                return candidate
-        print(
-            f"Requested model type '{selected_model_type}' not found. Falling back to preferred list."
-        )
+    if selected.endswith(".joblib"):
+        return selected
+    if selected.startswith("model_"):
+        return f"{selected}.joblib"
+    return f"model_{selected}.joblib"
 
-    candidates = [path for path in preferred if path.exists()]
-    if not candidates:
-        candidates = sorted(MODELS_DIR.glob("model*.joblib"))
-    return candidates[0] if candidates else None
+
+def set_as_main_model(source_model: Path, target_model: Path) -> None:
+    if target_model.exists():
+        target_model.unlink()
+    source_model.rename(target_model)
 
 
 def parse_args() -> argparse.Namespace:
@@ -50,22 +41,32 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    downloaded_path = snapshot_download(
-        repo_id="qg2020252627/twitter_author_profiling_by_gender_nlp",
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    requested_filename = normalize_model_filename(args.model_type)
+    target_model = MODELS_DIR / "model.joblib"
+
+    if os.path.exists(requested_filename):
+        print(f"Model file already exists locally: {requested_filename}")
+        set_as_main_model(Path(requested_filename), target_model)
+        print(f"Renamed existing file to: {target_model}")
+        return
+
+    downloaded_path = hf_hub_download(
+        repo_id=REPO_ID,
         repo_type="model",
+        filename=requested_filename,
         local_dir=str(MODELS_DIR),
         token=os.getenv("HUGGINGFACE_HUB_TOKEN"),
     )
 
-    target_model = MODELS_DIR / "model.joblib"
-    if not target_model.exists():
-        candidate = resolve_target_candidate(args.model_type)
-        if candidate:
-            shutil.copy2(candidate, target_model)
-            print(
-                f"Created alias model file: {target_model} -> {candidate.name}")
+    downloaded_file = Path(downloaded_path)
+    if not downloaded_file.exists():
+        raise FileNotFoundError(
+            f"Expected downloaded model file was not found: {downloaded_file}"
+        )
 
-    print(f"Downloaded to: {downloaded_path}")
+    set_as_main_model(downloaded_file, target_model)
+    print(f"Downloaded one file and renamed to: {target_model}")
 
 
 if __name__ == "__main__":
