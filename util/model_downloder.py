@@ -9,6 +9,20 @@ MODELS_DIR = PROJECT_ROOT / "notebooks" / "models"
 REPO_ID = "qg2020252627/twitter_author_profiling_by_gender_nlp"
 
 
+def arg_parse_model_type(model_type: str) -> str:
+    switch = {
+        "LinearSVC": "model_LinearSVC.joblib",
+        "LogisticRegression": "model_LogisticRegression.joblib",
+        "RandomForest": "model_RandomForest.joblib",
+    }
+
+    if model_type in switch:
+        return switch[model_type]
+    else:
+        raise ValueError(
+            f"Unsupported model type: {model_type}. Supported types are: {', '.join(switch.keys())}.")
+
+
 def normalize_model_filename(model_type: str) -> str:
     selected = (model_type or "").strip()
     if not selected:
