@@ -73,7 +73,10 @@ Model save/load:
 
 - `util/model_downloder.py`
     - Downloads model artifacts from Hugging Face Hub into `notebooks/models`.
-    - Creates alias file `notebooks/models/model.joblib` if only specific model filenames exist.
+    - Resolves `--model-type` to one of model files (`model_LinearSVC.joblib`, `model_LogisticRegression.joblib`, `model_RandomForest.joblib`).
+    - If the resolved model file already exists in `notebooks/models`, it is set as main by renaming to `notebooks/models/model.joblib`.
+    - Otherwise, downloads the resolved file from Hugging Face Hub and then renames it to `notebooks/models/model.joblib`.
+    - Supported `--model-type` values: `svc`, `lr`, `rf`, `LinearSVC`, `LogisticRegression`, `RandomForest`, and explicit supported filenames (`model_LinearSVC.joblib`, `model_LogisticRegression.joblib`, `model_RandomForest.joblib`) (default: `svc`).
 
 - `util/logger.py`
     - Utility helpers for Weights & Biases logging.
@@ -96,14 +99,14 @@ Notebooks are in `notebooks/` and are ordered as a workflow:
 
 3. `03_Hyperparams.ipynb`
      - Hyperparameter tuning for the text-classification pipeline.
-     - Supports W&B logging and saving best configuration/model.
+    - Uses W&B logging and saves search results/models (requires `WANDB_TOKEN` in current notebook implementation).
 
 4. `04_Training.ipynb`
      - Final training with selected hyperparameters.
      - Test evaluation and model export.
 
 5. `05_Hypotesis.ipynb`
-     - Hypothesis-testing experiments (for example, impact of tweets-per-author).
+    - Hypothesis-testing notebook comparing 1 tweet vs 100 tweets per author setups.
 
 ### Detailed notebook description (same order)
 
@@ -111,8 +114,8 @@ Notebooks are in `notebooks/` and are ordered as a workflow:
      - Used for dataset creation for author profiling.
      - Includes data collection and cleaning so the resulting dataset is ready for the next notebooks.
      - Uses data originally downloaded from [TBCOV](https://crisisnlp.qcri.org/tbcov), then cleans it and enriches tweet text via Twitter/X APIs.
-     - Works with two setups: one tweet per author and one hundred tweets per author ([PAN CLEF Dataset](https://zenodo.org/records/3692340)).
-     - This enables testing the hypothesis that more tweets per author can improve model performance.
+    - Supports two practical paths for the 1-tweet setup: build from raw data/API or download prepared splits from Hugging Face.
+    - The 100-tweets-per-author setup ([PAN CLEF Dataset](https://zenodo.org/records/3692340)) is prepared and evaluated in `05_Hypotesis.ipynb`.
 
 2. `02_EDA.ipynb`
      - Exploratory data analysis notebook.
@@ -125,12 +128,12 @@ Notebooks are in `notebooks/` and are ordered as a workflow:
      - Needs:
          - dataset with 1 tweet per author
      - Performs hyperparameter tuning for the pipeline:
-         - `TweetPreprocessor -> FeatureUnion [TfidfVectorizer(word) + TfidfVectorizer(char)] -> TruncatedSVD -> LinearSVC`
+         - `TweetPreprocessor -> FeatureUnion [TfidfVectorizer(word) + TfidfVectorizer(char)] -> TruncatedSVD -> classifier (default: LinearSVC)`
      - Search is done in two phases:
-         - Randomized Search (500 iterations, 4-fold stratified CV, F1-macro scoring) for broad exploration.
+         - Randomized Search with staged passes (TF-IDF word: 100, TF-IDF char: 100, SVD: 10, classifier: 50), 4-fold stratified CV, F1-macro scoring.
          - Grid Search for refinement around the best region.
      - Tuning is staged: TF-IDF parameters, then SVD parameters, then `LinearSVC` parameters.
-     - `WANDB_TOKEN` can be used to log metrics and best parameters to W&B.
+     - `WANDB_TOKEN` is required by the current notebook code to log metrics and best parameters to W&B.
      - Best model can be saved as a W&B artifact and exported locally.
 
 4. `04_Training.ipynb`
@@ -140,20 +143,20 @@ Notebooks are in `notebooks/` and are ordered as a workflow:
      - Final model training notebook.
      - Merges training and validation sets (LinearSVC has no validation phase), applies tuned hyperparameters, and trains the same pipeline.
      - Evaluates on test set with classification report (precision, recall, F1) and confusion matrix.
-     - Can log training results to W&B and save model artifacts.
-     - Final model can be exported locally.
+    - Uses W&B logging in the current implementation (requires `WANDB_TOKEN`).
+    - Final model can be exported locally and uploaded to Hugging Face Hub.
 
 5. `05_Hypotesis.ipynb`
      - Needs:
          - dataset with 1 tweet per author
          - trained model on dataset with 1 tweet per author
-     - Reserved for hypothesis testing.
-     - Intended to verify whether using more tweets per author leads to better performance and to test related author-profiling hypotheses.
+    - Downloads and prepares PAN19 data (100 tweets per author, English split), trains a baseline pipeline, and compares against the 1-tweet model.
+    - Evaluates both models on two test settings (100-tweet test set and 1-tweet test set) to verify the tweets-per-author hypothesis.
 
 ### Data and models
 
 - `notebooks/datasets/`: prepared CSV datasets and PAN19 source files.
-- `notebooks/models/`: trained models (`.joblib`) and model README.
+- `notebooks/models/`: trained models (`.joblib`) and optional model notes/README.
 
 ## API
 
@@ -195,9 +198,9 @@ Response:
 | Variable | Used in | Required | Default | Description |
 |---|---|---|---|---|
 | `MODEL_PATH` | `app.py` | No | `model.joblib` | Model file path resolved relative to repository root |
-| `WANDB_TOKEN` | notebooks | Optional | - | Token for logging runs/artifacts to Weights & Biases |
+| `WANDB_TOKEN` | `03_Hyperparams.ipynb`, `04_Training.ipynb` | Required by current notebook code | - | Token for Weights & Biases login and logging |
 | `TWITTER_BEARER_TOKEN` | `01_Dataset.ipynb` | Optional | - | Token for collecting tweet text from X/Twitter APIs |
-| `HUGGINGFACE_HUB_TOKEN` | `util/model_downloder.py` | Optional | - | Token for downloading private model repos |
+| `HUGGINGFACE_HUB_TOKEN` | `util/model_downloder.py`, `04_Training.ipynb` | Optional for download, required for upload in `04_Training.ipynb` | - | Token for downloading private model repos and uploading trained models to Hugging Face Hub |
 
 ## Docker Image
 

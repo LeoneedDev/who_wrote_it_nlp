@@ -10,20 +10,33 @@ REPO_ID = "qg2020252627/twitter_author_profiling_by_gender_nlp"
 
 
 def arg_parse_model_type(model_type: str) -> str:
+    normalized = model_type.strip().lower()
     switch = {
         "svc": "model_LinearSVC.joblib",
+        "linearsvc": "model_LinearSVC.joblib",
+        "model_linearsvc.joblib": "model_LinearSVC.joblib",
         "lr": "model_LogisticRegression.joblib",
+        "logisticregression": "model_LogisticRegression.joblib",
+        "model_logisticregression.joblib": "model_LogisticRegression.joblib",
         "rf": "model_RandomForest.joblib",
+        "randomforest": "model_RandomForest.joblib",
+        "model_randomforest.joblib": "model_RandomForest.joblib",
     }
 
-    if model_type in switch:
-        return switch[model_type]
-    else:
-        raise ValueError(
-            f"Unsupported model type: {model_type}. Supported types are: {', '.join(switch.keys())}.")
+    if normalized in switch:
+        return switch[normalized]
+
+    raise ValueError(
+        f"Unsupported model type: {model_type}. "
+        "Supported values: svc, lr, rf, LinearSVC, LogisticRegression, RandomForest "
+        "or explicit model_*.joblib filenames."
+    )
 
 
 def set_as_main_model(source_model: Path, target_model: Path) -> None:
+    if source_model.resolve() == target_model.resolve():
+        return
+
     if target_model.exists():
         target_model.unlink()
     source_model.rename(target_model)
@@ -35,8 +48,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model-type",
-        default=None,
-        help="Preferred model type or filename (e.g. LinearSVC, model_LinearSVC.joblib).",
+        default="svc",
+        help=(
+            "Preferred model type or filename. "
+            "Supported: svc, lr, rf, LinearSVC, LogisticRegression, RandomForest, "
+            "or model_*.joblib. Default: svc."
+        ),
     )
     return parser.parse_args()
 
@@ -46,10 +63,11 @@ def main() -> None:
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     requested_filename = arg_parse_model_type(args.model_type)
     target_model = MODELS_DIR / "model.joblib"
+    local_requested_file = MODELS_DIR / requested_filename
 
-    if os.path.exists(requested_filename):
-        print(f"Model file already exists locally: {requested_filename}")
-        set_as_main_model(Path(requested_filename), target_model)
+    if local_requested_file.exists():
+        print(f"Model file already exists locally: {local_requested_file}")
+        set_as_main_model(local_requested_file, target_model)
         print(f"Renamed existing file to: {target_model}")
         return
 
