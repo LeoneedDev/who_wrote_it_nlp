@@ -18,9 +18,9 @@ def arg_parse_model_type(model_type: str) -> str:
         "lr": "model_LogisticRegression.joblib",
         "logisticregression": "model_LogisticRegression.joblib",
         "model_logisticregression.joblib": "model_LogisticRegression.joblib",
-        "rf": " model_RandomForestClassifier.joblib",
-        "randomforest": " model_RandomForestClassifier.joblib",
-        "model_randomforest.joblib": " model_RandomForestClassifier.joblib",
+        "rf": "model_RandomForestClassifier.joblib",
+        "randomforest": "model_RandomForestClassifier.joblib",
+        "model_randomforest.joblib": "model_RandomForestClassifier.joblib",
     }
 
     if normalized in switch:
